@@ -37,7 +37,7 @@ def save_to_file(output_file, line, tag):
     with open(output_file, "a+") as f:
         f.write(output)
 
-def train(path):
+def count_emission(path):
 
     emissions_count = {}
     labels_count = {"O": 0, "B-positive": 0, "I-positive": 0, "B-negative": 0, "I-negative": 0, "B-neutral": 0, "I-neutral": 0}
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     dev_path = f"{foldername}/dev.in"
     output_path = f"{foldername}/{output_file}"
 
-    emissions_count, labels_count = train(train_path)
+    emissions_count, labels_count = count_emission(train_path)
 
     with open(dev_path, "r") as f:
         open(output_path, "w")
