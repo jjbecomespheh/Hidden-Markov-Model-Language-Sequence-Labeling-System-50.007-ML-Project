@@ -28,10 +28,16 @@ def calc_argmax(emissions_count, states_count, x):
 
     return max(em_prob, key=em_prob.get)
 
+def save_to_file(output_file, line, tag):
 
-def train(foldername):
-    filename = "train"
-    path = f"{foldername}/{filename}"
+    output = f"{line} {tag}\n"
+    if line == "":
+        output = "\n"
+
+    with open(output_file, "a+") as f:
+        f.write(output)
+
+def train(path):
 
     emissions_count = {}
     states_count = {"O": 0, "B-positive": 0, "I-positive": 0, "B-negative": 0, "I-negative": 0, "B-neutral": 0, "I-neutral": 0}
@@ -51,7 +57,8 @@ def train(foldername):
                 {"0": {"disfrutemos: 1}} 
 
                 """
-                word, label = line.split()
+                word, label = line.rsplit(" ",1)
+
                 emissions_count[word] = emissions_count.get(word,{})
                 
                 for state in states_count:
@@ -66,21 +73,25 @@ def train(foldername):
             
     return emissions_count, states_count
 
-def eval(foldername, emissions_count, states_count):
-    filename = "dev.in"
-    path = f"{foldername}/{filename}"
-
-    pass
-
-
 if __name__ == "__main__":
     foldername = "ES"
-    emissions_count, states_count = train(foldername)
-    test_word = "estuvo"
-    tag = calc_argmax(emissions_count, states_count, test_word)
-    print(states_count)
-    print(emissions_count[test_word])
-    print(tag)
-    # em_param = est_em_params(emissions_count, states_count, "y", "O")
-    # print(em_param)
-    # emissions_count, states_count = eval(foldername, emissions_count, states_count)
+    output_file = "dev.p1.out"
+    
+    train_path = f"{foldername}/train"
+    dev_path = f"{foldername}/dev.in"
+    output_path = f"{foldername}/{output_file}"
+
+    emissions_count, states_count = train(train_path)
+
+    with open(dev_path, "r") as f:
+        open(output_path, "w")
+
+        for line in f:
+
+            line = line.replace("\n", "")
+
+            if line != "":
+                tag = calc_argmax(emissions_count, states_count, line)
+            else:
+                tag = ""
+            save_to_file(output_path, line, tag)
