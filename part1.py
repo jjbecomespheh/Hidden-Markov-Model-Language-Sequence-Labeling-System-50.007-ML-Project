@@ -1,3 +1,5 @@
+import argparse
+
 def est_em_params(emission_count, labels_count, x,y):
     
     count_yx = emission_count[x][y] 
@@ -74,12 +76,18 @@ def count_emission(path):
     return emission_count, labels_count
 
 if __name__ == "__main__":
-    foldername = "ES"
-    output_file = "dev.p1.out"
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--folder", "-f", type=str, default="./ES", help="Folder path")
+    parser.add_argument("--output", "-o", type=str, default="./ES/dev.p1.out", help="Output file path")
+
+    opt = parser.parse_args()
+
+    foldername = opt.folder
+    output_path = opt.output
     
     train_path = f"{foldername}/train"
     dev_path = f"{foldername}/dev.in"
-    output_path = f"{foldername}/{output_file}"
 
     emission_count, labels_emission_count = count_emission(train_path)
 
