@@ -1,30 +1,29 @@
-def est_em_params(emissions_count, labels_count, x,y):
+def est_em_params(emission_count, labels_count, x,y):
     
-    count_yx = emissions_count[x][y] 
+    count_yx = emission_count[x][y] 
     count_y = labels_count[y]
     return count_yx/count_y
 
-def est_em_params_unk(emissions_count, labels_count, x,y, k=1):
+def est_em_params_unk(emission_count, labels_count, x,y, k=1):
 
     token= "#UNK#"
-    
-    if x not in emissions_count:
-        x = token
-        emissions_count[x] = emissions_count.get(x,{})
-        emissions_count[x][y] = emissions_count[x].get(y,0)
     
     if x == token:
         return k/ (labels_count[y]+k)
 
     else:
-        count_yx= emissions_count[x][y] 
+        count_yx= emission_count[x][y] 
         return count_yx/ (labels_count[y]+k)
 
-def calc_argmax(emissions_count, labels_count, x):
+def calc_argmax(emission_count, labels_count, x):
     
     em_prob = {}
+
+    if x not in emission_count:
+        x = "#UNK#"
+
     for label in labels_count:
-        em_prob[label] = est_em_params_unk(emissions_count, labels_count, x, label)
+        em_prob[label] = est_em_params_unk(emission_count, labels_count, x, label)
 
     return max(em_prob, key=em_prob.get)
 
@@ -39,7 +38,7 @@ def save_to_file(output_file, line, tag):
 
 def count_emission(path):
 
-    emissions_count = {}
+    emission_count = {}
     labels_count = {"O": 0, "B-positive": 0, "I-positive": 0, "B-negative": 0, "I-negative": 0, "B-neutral": 0, "I-neutral": 0}
 
     with open(path, "r") as f:
@@ -51,7 +50,7 @@ def count_emission(path):
             try:
                 """ 
                 Store the observation and its count as a dictionary 
-                in the emissions_count dictionary 
+                in the emission_count dictionary 
 
                 Eg. For label O and word disfrutemos, 
                 {"disfuremos": {"O": <count>, "B-positive": <count> , ...}} 
@@ -59,20 +58,20 @@ def count_emission(path):
                 """
                 word, lbl = line.rsplit(" ",1)
 
-                emissions_count[word] = emissions_count.get(word,{})
+                emission_count[word] = emission_count.get(word,{})
                 
                 # Populating the inner dictionary by initializing count to 0 for each label
                 for label in labels_count:
-                    emissions_count[word][label] = emissions_count[word].get(label, 0)
+                    emission_count[word][label] = emission_count[word].get(label, 0)
 
-                emissions_count[word][lbl] = emissions_count[word].get(lbl, 0) + 1
+                emission_count[word][lbl] = emission_count[word].get(lbl, 0) + 1
                 labels_count[lbl] += 1
 
             except:
-                # empty space
+                # empty line in input file
                 pass
             
-    return emissions_count, labels_count
+    return emission_count, labels_count
 
 if __name__ == "__main__":
     foldername = "ES"
@@ -82,7 +81,7 @@ if __name__ == "__main__":
     dev_path = f"{foldername}/dev.in"
     output_path = f"{foldername}/{output_file}"
 
-    emissions_count, labels_count = count_emission(train_path)
+    emission_count, labels_emission_count = count_emission(train_path)
 
     with open(dev_path, "r") as f:
         open(output_path, "w")
@@ -92,7 +91,7 @@ if __name__ == "__main__":
             line = line.replace("\n", "")
 
             if line != "":
-                tag = calc_argmax(emissions_count, labels_count, line)
+                tag = calc_argmax(emission_count, labels_emission_count, line)
             else:
                 tag = ""
             save_to_file(output_path, line, tag)
