@@ -10,6 +10,7 @@ def viterbi(labels_transition_count, labels_emission_count, transition_count, em
     # STEP 1: Initialization
     pi = { 0 : {"Start": 0} }
     optimum_labels = []
+    pp = pprint.PrettyPrinter(depth=6)
 
     # STEP 2: Move Forward -> pi(j+1,u) = max{pi(j,v)*(b_u(x_j+1))*(a_v,u)}
     for j in range(1, len(seq)+1):
@@ -43,9 +44,7 @@ def viterbi(labels_transition_count, labels_emission_count, transition_count, em
             pi[j][v] = max_value
         optimum_y = max(pi[j], key=pi[j].get)
         optimum_labels.append(optimum_y)
-        pp = pprint.PrettyPrinter(depth=6)
-        # pp.pprint(pi)
-    #print(optimum_labels)        
+     
     return optimum_labels
 
 def count_transition(path):
@@ -60,6 +59,7 @@ def count_transition(path):
                         "I-neutral": {"Start": 0, "O": 0, "B-positive": 0, "I-positive": 0, "B-negative": 0, "I-negative": 0, "B-neutral": 0, "I-neutral": 0, "Stop": 0},
                         }
     labels_count = {"Start": 0, "O": 0, "B-positive": 0, "I-positive": 0, "B-negative": 0, "I-negative": 0, "B-neutral": 0, "I-neutral": 0, "Stop": 0}
+    pp = pprint.PrettyPrinter(depth=6)
 
     with open(path, "r") as f:
         lines_ls = f.readlines()
@@ -74,7 +74,7 @@ def count_transition(path):
                 break
             
             line = lines_ls[line_num].replace("\n", "")
-            lineplusone = lines_ls[line_num+1].replace("\n", "") #ERROR
+            lineplusone = lines_ls[line_num+1].replace("\n", "") 
             current_ls = line.rsplit(" ", 1)
             next_ls = lineplusone.rsplit(" ", 1)
 
@@ -84,7 +84,6 @@ def count_transition(path):
                 word = current_ls[0]
                 lbl = current_ls[1]
                 lblplusone = next_ls[1]
-                # print(line_num+1, word, lbl) 
                 transition_count[lbl][lblplusone] += 1
                 labels_count[lbl] += 1
 
@@ -96,23 +95,19 @@ def count_transition(path):
                 transition_count["Start"][lblplusone] += 1
                 labels_count["Start"] += 1
         labels_count["Stop"] = labels_count["Start"]   
-        pp = pprint.PrettyPrinter(depth=6)
-        #pp.pprint(transition_count)
-        #pp.pprint(labels_count)
+
     return transition_count, labels_count
 
 if __name__ == "__main__":
-    foldername = "RU"
+    foldername = "ES"
     output_file = "dev.p2.out"
     
     train_path = f"{foldername}/train"
     dev_path = f"{foldername}/dev.in"
     output_path = f"{foldername}/{output_file}"
 
-    seq = ["La", "comida", "estuvo", "muy", "sabrosa", "."]
     transition_count, labels_transition_count = count_transition(train_path)
-    emmision_count, labels_emmision_count = count_emission(train_path)
-    optimum_labels = viterbi(labels_transition_count, labels_emmision_count, transition_count, emmision_count, seq)
+    emission_count, labels_emission_count = count_emission(train_path)
  
     with open(dev_path, "r") as f:
         open(output_path, "w")
@@ -127,7 +122,7 @@ if __name__ == "__main__":
             if line != "":
                 temp_sentence.append(line)
             else:
-                optimum_labels = viterbi(labels_transition_count, labels_emmision_count, transition_count, emmision_count, temp_sentence)
+                optimum_labels = viterbi(labels_transition_count, labels_emission_count, transition_count, emission_count, temp_sentence)
                 with open(output_path, "a") as f:
                     for i in range(len(temp_sentence)):
                         out = f"{temp_sentence[i]} {optimum_labels[i]}\n" 
