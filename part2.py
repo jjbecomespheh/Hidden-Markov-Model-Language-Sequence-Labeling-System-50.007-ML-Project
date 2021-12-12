@@ -1,7 +1,6 @@
 import pprint
 from part1 import *
 from math import log
-import numpy as np
 
 def est_tr_params(transition_count, labels_count, yi_1, yi):
     return transition_count[yi_1][yi]/labels_count[yi_1]
