@@ -7,6 +7,9 @@ def est_em_params(emission_count, labels_count, x,y):
 def est_em_params_unk(emission_count, labels_count, x,y, k=1):
 
     token= "#UNK#"
+
+    if x not in emission_count:
+        x = "#UNK#"
     
     if x == token:
         return k/ (labels_count[y]+k)
@@ -18,9 +21,6 @@ def est_em_params_unk(emission_count, labels_count, x,y, k=1):
 def calc_argmax(emission_count, labels_count, x):
     
     em_prob = {}
-
-    if x not in emission_count:
-        x = "#UNK#"
 
     for label in labels_count:
         em_prob[label] = est_em_params_unk(emission_count, labels_count, x, label)
