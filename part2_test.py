@@ -109,29 +109,51 @@ if __name__ == "__main__":
     dev_path = f"{foldername}/dev.in"
     output_path = f"{foldername}/{output_file}"
 
-    seq = ["La", "comida", "estuvo", "muy", "sabrosa", "."]
-    transition_count, labels_transition_count = count_transition(train_path)
-    emmision_count, labels_emmision_count = count_emission(train_path)
-    optimum_labels = viterbi(labels_transition_count, labels_emmision_count, transition_count, emmision_count, seq)
- 
-    with open(dev_path, "r") as f:
-        open(output_path, "w")
-        
-        lines_ls = f.readlines()
-        
-        temp_sentence = []
 
-        for i in range(len(lines_ls)):
-            line = lines_ls[i].replace("\n", "")
+    # EXTRA WORK (DUPLICATED -> already done below LOL)
+    # # seq = ["La", "comida", "estuvo", "muy", "sabrosa", "."]
+    # seq_dict = {} # Created a dictionary that stores all the possible sequence from train
+    # # E.g. seq_dict = {1:["disfrutemos","de","una","buenísima", "calidad", "en", "el", "producto", "y", "una","inmejorable","relación", "calidad","precio","."],
+    # #                  2:["Hoy", "he", "ido", ...], ...}
+    # num = 1
+    # with open(train_path, "r") as f:
+    #     lines_ls = f.readlines()
+    #     seq_ls = []
+    #     for l in lines_ls:
+    #         line = l.replace("\n", "")
+    #         # print(line[:-2])
+    #         if line != "":
+    #             seq_ls.append(line[:-2])
+    #         elif line == "":
+    #             seq_dict[num] = seq_ls
+    #             seq_ls = []
+    #             num += 1
+
+    # transition_count, labels_transition_count = count_transition(train_path)
+    # emmision_count, labels_emmision_count = count_emission(train_path)
+    # for seq in seq_dict.values():
+    #     optimum_labels = viterbi(labels_transition_count, labels_emmision_count, transition_count, emmision_count, seq)
+    #     print(optimum_labels)
+    
+
+    # with open(dev_path, "r") as f:
+    #     open(output_path, "w")
+        
+    #     lines_ls = f.readlines()
+        
+    #     temp_sentence = []
+
+    #     for i in range(len(lines_ls)):
+    #         line = lines_ls[i].replace("\n", "")
             
-            if line != "":
-                temp_sentence.append(line)
-            else:
-                optimum_labels = viterbi(labels_transition_count, labels_emmision_count, transition_count, emmision_count, temp_sentence)
-                with open(output_path, "a") as f:
-                    for i in range(len(temp_sentence)):
-                        out = f"{temp_sentence[i]} {optimum_labels[i]}\n" 
-                        f.write(out)
-                    f.write('\n')
+    #         if line != "":
+    #             temp_sentence.append(line)
+    #         else:
+    #             optimum_labels = viterbi(labels_transition_count, labels_emmision_count, transition_count, emmision_count, temp_sentence)
+    #             with open(output_path, "a") as f:
+    #                 for i in range(len(temp_sentence)):
+    #                     out = f"{temp_sentence[i]} {optimum_labels[i]}\n" 
+    #                     f.write(out)
+    #                 f.write('\n')
             
-                temp_sentence = []
+    #             temp_sentence = []
