@@ -21,9 +21,7 @@ def viterbi_5th_best(labels_transition_count, labels_emission_count, transition_
             for u in pi[j-1].keys():
                 #Find all prob from prev layer to node v -> Then get the max
                 new_u_pair = u.strip('][').split(', ')
-                # print(new_u_pair)
                 new_u = new_u_pair[-1][1:-1] # eg. remove "" from "'Start'"
-                # print(j, " -> ", u, " -> ", v)
                 temp_inner_ls = []
                 
                 transition_prob = est_tr_params(transition_count, labels_transition_count, new_u, v)
@@ -40,13 +38,9 @@ def viterbi_5th_best(labels_transition_count, labels_emission_count, transition_
                     temp_inner_ls.append(float("-inf"))
 
                 temp_ls.append(temp_inner_ls)
-        # print("temp_ls ->")
-        # pp.pprint(temp_ls)
 
-            # pi[j][v] = prob[1]
         temp_ls.sort(key = lambda x: -x[-1])
         temp_ls = temp_ls[:5]
-        # pp.pprint(temp_ls)
 
         for i in range(len(temp_ls)):
             uv_ls = []
@@ -66,7 +60,6 @@ def viterbi_5th_best(labels_transition_count, labels_emission_count, transition_
     final_labels = ast.literal_eval(final_labels)[2:]
     return final_labels
 
-
 if __name__ == "__main__":
 
     foldername = "RU"
@@ -76,11 +69,8 @@ if __name__ == "__main__":
     dev_path = f"{foldername}/dev.in"
     output_path = f"{foldername}/{output_file}"
 
-    # seq = ["La", "comida", "estuvo", "muy", "sabrosa", "."]
     transition_count, labels_transition_count = count_transition(train_path)
     emission_count, labels_emission_count = count_emission(train_path)
-
-    # optimum_labels = viterbi_5th_best(labels_transition_count, labels_emission_count, transition_count, emission_count, seq)
   
     with open(dev_path, "r") as f:
         open(output_path, "w")
