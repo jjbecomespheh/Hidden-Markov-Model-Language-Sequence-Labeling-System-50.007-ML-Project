@@ -7,12 +7,15 @@ import ast
 
 def viterbi_5th_best(labels_transition_count, labels_emission_count, transition_count, emission_count, seq, k=1):
    
-    pp = pprint.PrettyPrinter(depth=6)
-    
-    # STEP 1: Initialization
+    """
+    This approach is a modified version of the Viterbi algorithm to obtain the 5th best sequence.
+
+    pi is a dictionary with length equal to the length of a sentence. If has keys numbering from 0 to length of sentence -1.
+    The values of pi consists dictionaries with keys as the possible sequence labels for the words, and values as the probability for the sequence
+    """
+
     pi = { 0 : {"[_, 'Start']": 0} }
 
-    # STEP 2: Move Forward -> pi(j+1,u) = max{pi(j,v)*(b_u(x_j+1))*(a_v,u)}
     for j in range(1, len(seq)+1):
 
         pi[j] = {}
@@ -51,7 +54,8 @@ def viterbi_5th_best(labels_transition_count, labels_emission_count, transition_
 
     final_layer = pi[len(pi)-1]
     fifth_best = 100000
-    for key, value in final_layer.items():
+
+    for value in final_layer.values():
         
         if value < fifth_best:
             fifth_best = value
@@ -60,23 +64,7 @@ def viterbi_5th_best(labels_transition_count, labels_emission_count, transition_
     final_labels = ast.literal_eval(final_labels)[2:]
     return final_labels
 
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--folder", "-f", type=str, default="./ES", help="Folder path")
-    parser.add_argument("--output", "-o", type=str, default="./ES/dev.p3.out", help="Output file path")
-
-    opt = parser.parse_args()
-
-    foldername = opt.folder
-    output_path = opt.output
-    
-    train_path = f"{foldername}/train"
-    dev_path = f"{foldername}/dev.in"
-
-    transition_count, labels_transition_count = count_transition(train_path)
-    emission_count, labels_emission_count = count_emission(train_path)
-  
+def output_to_file(dev_path, output_path, labels_transition_count, labels_emission_count, transition_count, emission_count):
     with open(dev_path, "r") as f:
         open(output_path, "w")
         
@@ -98,3 +86,22 @@ if __name__ == "__main__":
                     f.write('\n')
             
                 temp_sentence = []
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--folder", "-f", type=str, default="ES", help="ES or RU")
+
+    opt = parser.parse_args()
+
+    foldername = opt.folder
+    
+    train_path = f"./{foldername}/train"
+    dev_path = f"./{foldername}/dev.in"
+    output_path = f"./{foldername}/dev.p3.out"
+
+    transition_count, labels_transition_count = count_transition(train_path)
+    emission_count, labels_emission_count = count_emission(train_path)
+  
+    output_to_file(dev_path, output_path, labels_transition_count, labels_emission_count, transition_count, emission_count)
