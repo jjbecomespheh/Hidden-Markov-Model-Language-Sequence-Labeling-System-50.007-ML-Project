@@ -13,44 +13,44 @@ def viterbi_modified(states, seq, weights):
         k: {}
     }
 
-    pi_edge = {
+    pi_end = {
         k: {}
     }
 
     for state in states:
         features = get_features(seq[0], state, "Start")
-        feature_weights = sum((weights[x] for x in features))
-        pi[k][state] = feature_weights
-        pi_edge[k][state] = "Start"
+        weights_of_features = sum((weights[x] for x in features))
+        pi[k][state] = weights_of_features
+        pi_end[k][state] = "Start"
 
     for observation in seq[1:]:
         k += 1
         pi[k] = {}
-        pi_edge[k] = {}
+        pi_end[k] = {}
         for v in states:
-            probabilities = {}
+            prob = {}
             for u in pi[k-1].keys():
                 features = get_features(observation, v, u)
-                feature_weights = sum((weights[x] for x in features))
+                weights_of_features = sum((weights[x] for x in features))
 
-                probabilities[u] = pi[k-1][u] + feature_weights
+                prob[u] = pi[k-1][u] + weights_of_features
                 
-            max_state = max(probabilities, key=probabilities.get)
-            pi[k][v] = probabilities[max_state]
-            pi_edge[k][v] = max_state
+            max_state = max(prob, key=prob.get)
+            pi[k][v] = prob[max_state]
+            pi_end[k][v] = max_state
         
     
-    probabilities = {}
+    prob = {}
     for u in pi[k].keys():
-        feature_weights = weights[(u, "Stop")]
-        probabilities[u] = pi[k][u] + feature_weights
+        weights_of_features = weights[(u, "Stop")]
+        prob[u] = pi[k][u] + weights_of_features
     
-    y_n = max(probabilities, key=probabilities.get)
+    y_n = max(prob, key=prob.get)
     state_pred_r = [y_n]
 
     for n in reversed(range(1, k+1)):
         next_state = state_pred_r[-1]
-        state_pred_r.append(pi_edge[n][next_state])
+        state_pred_r.append(pi_end[n][next_state])
     state_pred_r.reverse()
     
     return state_pred_r[1:]
@@ -65,7 +65,7 @@ def structured_perceptron(training_sentences_n_labels, states, epochs=10, l_rate
         
         print(f"| Epoch {epoch+1} |", end=" ")
         total = 0
-        correct = 0
+        corr = 0
         for seq in training_sentences_n_labels:
             
             seq_words = [word_label_ls[0] for word_label_ls in seq]
@@ -82,9 +82,9 @@ def structured_perceptron(training_sentences_n_labels, states, epochs=10, l_rate
                     weights[feature] = weights[feature] - l_rate * count
             
             total += len(seq)
-            correct += sum([1 for (predicted, gold) in zip(optimum_labels, seq_states) if predicted == gold])
+            corr += sum([1 for (predicted, gold) in zip(optimum_labels, seq_states) if predicted == gold])
 
-        print(f"Training acc: {correct/total} |")
+        print(f"Training acc: {corr/total} |")
 
     return weights
             
