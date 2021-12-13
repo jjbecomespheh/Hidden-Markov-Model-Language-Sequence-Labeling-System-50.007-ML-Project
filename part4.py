@@ -6,29 +6,28 @@ import time
 from math import log
 from collections import Counter, defaultdict
 
-def viterbi_algo(labels_emission_count, seq, weights):
+def viterbi_modified(states, seq, weights):
 
-    # Base Case
     k = 1
     pi = {
         k: {}
     }
+
     pi_edge = {
         k: {}
     }
 
-    for state in labels_emission_count:
-        features = get_features(seq[0], state, "START")
+    for state in states:
+        features = get_features(seq[0], state, "Start")
         feature_weights = sum((weights[x] for x in features))
         pi[k][state] = feature_weights
-        pi_edge[k][state] = "START"
+        pi_edge[k][state] = "Start"
 
-    # Move forward recursively
     for observation in seq[1:]:
         k += 1
         pi[k] = {}
         pi_edge[k] = {}
-        for v in labels_emission_count:
+        for v in states:
             probabilities = {}
             for u in pi[k-1].keys():
                 features = get_features(observation, v, u)
@@ -41,17 +40,14 @@ def viterbi_algo(labels_emission_count, seq, weights):
             pi_edge[k][v] = max_state
         
     
-    # Transition to STOP
     probabilities = {}
     for u in pi[k].keys():
-        feature_weights = weights[(u, "STOP")]
+        feature_weights = weights[(u, "Stop")]
         probabilities[u] = pi[k][u] + feature_weights
     
-    # Best y_n
     y_n = max(probabilities, key=probabilities.get)
     state_pred_r = [y_n]
 
-    # Backtrack
     for n in reversed(range(1, k+1)):
         next_state = state_pred_r[-1]
         state_pred_r.append(pi_edge[n][next_state])
@@ -60,23 +56,25 @@ def viterbi_algo(labels_emission_count, seq, weights):
     return state_pred_r[1:]
 
 
-def structured_perceptron(training_sentences_n_labels, transition_count, labels_transition_count, emission_count, labels_emission_count, epochs=10, l_rate=0.1):
-    states = ["Start", "O", "B-positive", "I-positive", "B-negative", "I-negative", "B-neutral", "I-neutral", "Stop"]
+def structured_perceptron(training_sentences_n_labels, states, epochs=10, l_rate=0.1):
+    
     weights = defaultdict(float)
     total_weights = defaultdict(tuple)
 
     for epoch in range(epochs):
-        total = correct = 0
         
+        print(f"| Epoch {epoch+1} |", end=" ")
+        total = 0
+        correct = 0
         for seq in training_sentences_n_labels:
             
             seq_words = [word_label_ls[0] for word_label_ls in seq]
             seq_states = [word_label_ls[1] for word_label_ls in seq]
 
-            optimum_labels = viterbi_algo(labels_emission_count, seq_words, weights)
+            optimum_labels = viterbi_modified(states, seq_words, weights)
 
-            gold_features = get_global_features(weights, total_weights,seq_words, seq_states)
-            prediction_features = get_global_features(weights, total_weights,seq_words, optimum_labels)
+            gold_features = get_global_features(seq_words, seq_states)
+            prediction_features = get_global_features(seq_words, optimum_labels)
 
             if optimum_labels != seq_states:
                 weights, total_weights = update(weights, total_weights, gold_features, l_rate, epoch+1)
@@ -86,11 +84,11 @@ def structured_perceptron(training_sentences_n_labels, transition_count, labels_
             total += len(seq)
             correct += sum([1 for (predicted, gold) in zip(optimum_labels, seq_states) if predicted == gold])
 
-        print(f"| Epoch {epoch+1} | Training accuracy: {correct/total} |")
+        print(f"Training acc: {correct/total} |")
 
     return weights
             
-def get_global_features(weights, total_weights, words, tags):
+def get_global_features(words, tags):
     counts = Counter()
     for i, (word, tag) in enumerate(zip(words, tags)):
         previous_tag = "Start" if i == 0 else tags[i-1]
@@ -98,20 +96,19 @@ def get_global_features(weights, total_weights, words, tags):
     return counts
 
 def update(weights, total_weights, features, l_rate, epochs):
-    for f, count in features.items():
-        w = weights[f]
-        if not total_weights[f]:
+    for feature, count in features.items():
+        w = weights[feature]
+        if not total_weights[feature]:
             w_iteration, total_weight = (0, 0)
         else:
-            w_iteration, total_weight = total_weights[f]
-        # Update weight sum with last registered weight since it was updated
+            w_iteration, total_weight = total_weights[feature]
+
         total_weight += (epochs - w_iteration) * w
         w_iteration = epochs
         total_weight += l_rate * count
 
-        # Update weight and total
-        weights[f] += l_rate * count
-        total_weights[f] = (w_iteration, total_weight)
+        weights[feature] += l_rate * count
+        total_weights[feature] = (w_iteration, total_weight)
     return weights, total_weights
 
 def get_features(word, state, prev_state):
@@ -163,40 +160,14 @@ def get_features(word, state, prev_state):
     ]
     return features
 
-def predict(labels_emission_count,training_sentences, weights):
+def predict(states,training_sentences, weights):
     predictions = []
     for seq in training_sentences:
-        pred_label = viterbi_algo(labels_emission_count, seq, weights)
+        pred_label = viterbi_modified(states, seq, weights)
         predictions.append(list(zip(seq, pred_label)))
     return predictions
 
-def output(output_file, predictions):
-    output = ""
-    for seq in predictions:
-        for entity in seq:
-            output += "{}\n".format(" ".join(entity))
-        output += "\n"
-    output += "\n"
-    with open(output_file, "w") as f:
-        f.write(output)
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--folder", "-f", type=str, default="./ES", help="Folder path")
-    parser.add_argument("--output", "-o", type=str, default="./ES/dev.p4.out", help="Output file path")
-
-    opt = parser.parse_args()
-
-    foldername = opt.folder
-    output_path = opt.output
-    
-    train_path = f"{foldername}/train"
-    dev_path = f"{foldername}/dev.in"
-
-    transition_count, labels_transition_count = count_transition(train_path)
-    emission_count, labels_emission_count = count_emission(train_path)
-    
+def get_training_sentences(train_path):
     with open(train_path, "r") as f:
         lines_ls = f.readlines()
         training_sentences_n_labels = []
@@ -209,14 +180,15 @@ if __name__ == "__main__":
             if len(ls) >=2:
                 sentence_list.append(ls)
             else:
-                sentence_list = sentence_list[:-1]
+                # Reached an empty line
                 if len(sentence_list) > 1:
                     training_sentences_n_labels.append(sentence_list)
                 sentence_list = []
+    
+    return training_sentences_n_labels
 
-    pp = pprint.PrettyPrinter(depth=6)
-    weights = structured_perceptron(training_sentences_n_labels, transition_count, labels_transition_count, emission_count, labels_emission_count, epochs=20, l_rate=0.1)
 
+def output_to_file(dev_path, output_path, states, weights):
     all_sentences = []
 
     with open(dev_path, "r") as f:
@@ -237,7 +209,7 @@ if __name__ == "__main__":
                     all_sentences.append(temp_sentence)
                 temp_sentence = []
 
-        optimum_labels = predict(labels_emission_count, all_sentences, weights)
+        optimum_labels = predict(states, all_sentences, weights)
 
         with open(output_path, "a") as f:
             for sentence in optimum_labels:
@@ -245,3 +217,30 @@ if __name__ == "__main__":
                     out = f"{word} {label}\n" 
                     f.write(out)
                 f.write('\n')
+    
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--folder", "-f", type=str, default="ES", help="ES or RU")
+    parser.add_argument("--mode", "-m", type=str, default="dev", help="dev or test")
+
+    opt = parser.parse_args()
+
+    foldername = opt.folder
+    mode = opt.mode
+    
+    train_path = f"./{foldername}/train"
+    dev_path = f"./{foldername}/{mode}.in"
+    output_path = f"./{foldername}/{mode}.p4.out"
+
+    states = ["O", "B-positive", "I-positive", "B-negative", "I-negative", "B-neutral", "I-neutral"]
+    
+    training_sentences_n_labels = get_training_sentences(train_path)
+
+    print("-------Training Started-------")
+    weights = structured_perceptron(training_sentences_n_labels, states, epochs=10, l_rate=0.1)
+    print("-------Training Ended-------")
+
+    output_to_file(dev_path, output_path, states, weights)
+    
