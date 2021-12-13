@@ -50,14 +50,6 @@ def count_emission(path):
             line = line.replace("\n", "")
 
             try:
-                """ 
-                Store the observation and its count as a dictionary 
-                in the emission_count dictionary 
-
-                Eg. For label O and word disfrutemos, 
-                {"disfuremos": {"O": <count>, "B-positive": <count> , ...}} 
-
-                """
                 word, lbl = line.rsplit(" ",1)
 
                 emission_count[word] = emission_count.get(word,{})
@@ -70,7 +62,7 @@ def count_emission(path):
                 labels_count[lbl] += 1
 
             except:
-                # empty line in input file
+                # Reached anempty line in input file
                 pass
             
     return emission_count, labels_count
@@ -78,16 +70,15 @@ def count_emission(path):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--folder", "-f", type=str, default="./ES", help="Folder path")
-    parser.add_argument("--output", "-o", type=str, default="./ES/dev.p1.out", help="Output file path")
+    parser.add_argument("--folder", "-f", type=str, default="ES", help="ES or RU")
 
     opt = parser.parse_args()
 
     foldername = opt.folder
-    output_path = opt.output
     
-    train_path = f"{foldername}/train"
-    dev_path = f"{foldername}/dev.in"
+    train_path = f"./{foldername}/train"
+    dev_path = f"./{foldername}/dev.in"
+    output_path = f"./{foldername}/dev.p1.out"
 
     emission_count, labels_emission_count = count_emission(train_path)
 
