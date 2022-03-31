@@ -1,4 +1,4 @@
-# 50.007-Machine-Learning-Project
+# Hidden Markov Model Language Sequence Labeling System | 50.007 ML Project
 
 ## Pre-requisites
 
